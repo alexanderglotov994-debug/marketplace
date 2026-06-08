@@ -17,93 +17,89 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <div class="page-shell">
-    <header class="hero">
-      <div class="hero__content">
-        <div class="brand-lockup">
-          <img
-            class="brand-lockup__logo"
-            src="./assets/mango-academy-logo.png"
-            alt="Mango Academy"
-          >
-          <div class="brand-lockup__text">
-            <span class="brand-lockup__title">Mango Academy</span>
-            <span class="brand-lockup__subtitle">Внутренняя админка обновления базы кейсов</span>
-          </div>
-        </div>
-        <p class="eyebrow">Администрирование</p>
-        <h1>Обновление каталога кейсов</h1>
-        <p class="hero__lead">
-          Эта страница только для обслуживания данных. Пользовательская витрина остаётся чистой и показывает
-          только фильтры и карточки кейсов.
-        </p>
-      </div>
-      <div class="hero__stats">
-        <div class="stat-card">
-          <span class="stat-card__label">Источник данных</span>
-          <strong class="stat-card__note"><code>data/cases.csv</code></strong>
-        </div>
-        <div class="stat-card">
-          <span class="stat-card__label">Где обновлять</span>
-          <strong class="stat-card__note">Excel или GitHub web editor</strong>
-        </div>
+  <div class="lk-shell">
+    <header class="topbar">
+      <div class="logo-mark" aria-label="Mango Academy">
+        <img src="./assets/mango-academy-mark.png" alt="Mango Academy">
       </div>
     </header>
 
-    <main class="admin-layout">
-      <section class="results-panel">
-        <div class="results-toolbar">
+    <div class="workspace">
+      <main class="page-shell">
+        <section class="content-header">
           <div>
-            <p class="panel-heading__eyebrow">Порядок обновления</p>
-            <h2>Прямое обновление на GitHub Pages</h2>
+            <h1>Обновление каталога кейсов</h1>
+            <p>Эта страница только для обслуживания данных</p>
           </div>
-        </div>
-
-        <section class="workflow-panel workflow-panel--admin">
-          <ol class="workflow-list">
-            <li>Открой файл <code>data/cases.csv</code> в Excel или прямо в GitHub.</li>
-            <li>Обнови или добавь строки кейсов.</li>
-            <li>Для нескольких значений в одной ячейке используй разделитель <code>|</code>.</li>
-            <li>Сохрани файл как <code>CSV UTF-8</code> с тем же именем или закоммить изменение через GitHub web editor.</li>
-            <li>GitHub Pages опубликует обновление после коммита в репозиторий.</li>
-            <li>Проверь пользовательскую витрину после публикации.</li>
-          </ol>
         </section>
-      </section>
 
-      <section class="filters-panel admin-card">
-        <div class="panel-heading">
-          <div>
-            <p class="panel-heading__eyebrow">Структура CSV</p>
-            <h2>Обязательные колонки</h2>
+        <section class="admin-summary">
+          <div class="stat-card">
+            <span class="stat-card__label">Источник данных</span>
+            <strong class="stat-card__note"><code>data/cases.csv</code></strong>
           </div>
-        </div>
+          <div class="stat-card">
+            <span class="stat-card__label">Где обновлять</span>
+            <strong class="stat-card__note">Excel или GitHub web editor</strong>
+          </div>
+        </section>
 
-        <div class="admin-tags">
-          <span class="chip">Название доработки</span>
-          <span class="chip">Описание</span>
-          <span class="chip">Отрасли</span>
-          <span class="chip">Продукты</span>
-          <span class="chip">Подразделения</span>
-          <span class="chip">Ссылка</span>
-        </div>
+        <div class="admin-layout">
+          <section class="results-panel">
+            <div class="results-toolbar">
+              <div>
+                <p class="panel-heading__eyebrow">Порядок обновления</p>
+                <h2>Прямое обновление на GitHub Pages</h2>
+              </div>
+            </div>
 
-        <div class="admin-command-list">
-          <div class="admin-command">
-            <span class="meta-group__label">Основной файл данных</span>
-            <code>data/cases.csv</code>
-          </div>
-          <div class="admin-command">
-            <span class="meta-group__label">Разделитель мультизначений</span>
-            <code>|</code>
-          </div>
-          <div class="admin-command">
-            <span class="meta-group__label">Пользовательская витрина</span>
-            <code>index.html</code>
-          </div>
+            <section class="workflow-panel workflow-panel--admin">
+              <ol class="workflow-list">
+                <li>Открой файл <code>data/cases.csv</code> в Excel или прямо в GitHub.</li>
+                <li>Обнови или добавь строки кейсов.</li>
+                <li>Для нескольких значений в одной ячейке используй разделитель <code>|</code>.</li>
+                <li>Сохрани файл как <code>CSV UTF-8</code> с тем же именем или закоммить изменение через GitHub web editor.</li>
+                <li>GitHub Pages опубликует обновление после коммита в репозиторий.</li>
+                <li>Проверь пользовательскую витрину после публикации.</li>
+              </ol>
+            </section>
+          </section>
+
+          <section class="filters-panel admin-card">
+            <div class="panel-heading">
+              <div>
+                <p class="panel-heading__eyebrow">Структура CSV</p>
+                <h2>Обязательные колонки</h2>
+              </div>
+            </div>
+
+            <div class="admin-tags">
+              <span class="chip">Название доработки</span>
+              <span class="chip">Описание</span>
+              <span class="chip">Отрасли</span>
+              <span class="chip">Продукты</span>
+              <span class="chip">Подразделения</span>
+              <span class="chip">Ссылка</span>
+            </div>
+
+            <div class="admin-command-list">
+              <div class="admin-command">
+                <span class="meta-group__label">Основной файл данных</span>
+                <code>data/cases.csv</code>
+              </div>
+              <div class="admin-command">
+                <span class="meta-group__label">Разделитель мультизначений</span>
+                <code>|</code>
+              </div>
+              <div class="admin-command">
+                <span class="meta-group__label">Пользовательская витрина</span>
+                <code>index.html</code>
+              </div>
+            </div>
+          </section>
         </div>
-      </section>
-    </main>
+      </main>
+    </div>
   </div>
 </body>
 </html>

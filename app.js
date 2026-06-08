@@ -189,7 +189,7 @@ function renderFilterGroups() {
   FILTER_CONFIG.forEach(({ key, label }, index) => {
     const group = document.createElement("details");
     group.className = "filter-group";
-    group.open = index === 0;
+    group.open = false;
 
     const options = collectOptions(key);
     group.dataset.key = key;
