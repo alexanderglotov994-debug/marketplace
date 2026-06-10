@@ -351,6 +351,11 @@ function matchesFilters(item) {
       return true;
     }
 
+    // Если у кейса указано "все" (пустой список тегов), он подходит под любой выбранный фильтр
+    if (item[key].length === 0) {
+      return true;
+    }
+
     return item[key].some((value) => selected.has(value));
   });
 }
@@ -407,6 +412,16 @@ function renderCards(items) {
     const link = node.querySelector(".case-card__link");
     link.href = item.url;
 
+    // Генерируем уникальный фоновый градиент по названию кейса
+    const visual = node.querySelector(".case-card__visual");
+    if (visual) {
+      visual.style.background = getGradientForTitle(item.title);
+      const textNode = document.createElement("div");
+      textNode.className = "case-card__visual-text";
+      textNode.textContent = item.title;
+      visual.appendChild(textNode);
+    }
+
     fillMetaLine(node, "industries", item.industries);
     fillMetaLine(node, "products", item.products);
     fillMetaLine(node, "divisions", item.divisions);
@@ -417,9 +432,19 @@ function renderCards(items) {
   elements.cardsGrid.appendChild(fragment);
 }
 
+function getGradientForTitle(title) {
+  let hash = 0;
+  for (let i = 0; i < title.length; i++) {
+    hash = title.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const h1 = Math.abs(hash) % 360;
+  const h2 = (h1 + 60) % 360;
+  return `linear-gradient(135deg, hsl(${h1}, 65%, 45%) 0%, hsl(${h2}, 75%, 35%) 100%)`;
+}
+
 function fillMetaLine(node, field, values) {
   const container = node.querySelector(`[data-field="${field}"]`);
-  container.textContent = values.join(", ");
+  container.textContent = values && values.length > 0 ? values.join(", ") : "все";
 }
 
 function escapeHtml(value) {
