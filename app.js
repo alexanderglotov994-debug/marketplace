@@ -416,10 +416,7 @@ function renderCards(items) {
     const visual = node.querySelector(".case-card__visual");
     if (visual) {
       visual.style.background = getGradientForTitle(item.title);
-      const textNode = document.createElement("div");
-      textNode.className = "case-card__visual-text";
-      textNode.textContent = item.title;
-      visual.appendChild(textNode);
+      node.querySelector(".case-card__visual-text").textContent = item.title;
     }
 
     fillMetaLine(node, "industries", item.industries);
