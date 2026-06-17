@@ -153,6 +153,30 @@
       overflow: hidden;
       text-overflow: ellipsis;
     }
+    .suggested-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-top: 0.75rem;
+    }
+    .tag-chip {
+      background: var(--surface-hover, #f3f4f6);
+      border: 1px solid var(--border, #e5e7eb);
+      padding: 0.25rem 0.75rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      cursor: pointer;
+      user-select: none;
+      transition: all 0.2s;
+    }
+    .tag-chip:hover {
+      background: var(--border, #e5e7eb);
+    }
+    .tag-chip.selected {
+      background: var(--primary, #3b82f6);
+      color: white;
+      border-color: var(--primary, #3b82f6);
+    }
   </style>
 </head>
 <body>
@@ -171,14 +195,17 @@
         <section class="content-header">
           <div>
             <h1>Управление каталогом кейсов</h1>
-            <p>Добавляйте, редактируйте и скачивайте обновленный CSV файл. <br><b>Как обновить:</b> внесите изменения, нажмите "Скачать CSV" и замените файл <code>data/cases.csv</code> в репозитории скачанным файлом.</p>
+            <p>Добавляйте, редактируйте кейсы. При сохранении изменения автоматически отправляются на GitHub, если настроена интеграция.</p>
           </div>
         </section>
 
         <div class="admin-container">
           <div class="admin-header-actions">
             <button class="btn btn--primary" id="btn-add-case">+ Добавить кейс</button>
-            <button class="btn btn--primary" id="btn-download-csv" style="background: #10b981; border-color: #059669;">Скачать обновленный cases.csv</button>
+            <div style="display: flex; gap: 0.5rem;">
+              <button class="btn" id="btn-settings">⚙️ Настройки GitHub</button>
+              <button class="btn" id="btn-download-csv" title="Скачать CSV файл локально">Скачать CSV</button>
+            </div>
           </div>
           
           <div class="admin-table-wrapper">
@@ -217,17 +244,20 @@
         <div class="form-group">
           <label for="case-industries">Отрасли</label>
           <input type="text" id="case-industries">
-          <div class="hint">Вводите через запятую (например: Розничная торговля, Интернет-магазины)</div>
+          <div class="suggested-tags" id="tags-industries"></div>
+          <div class="hint">Вводите через запятую или выбирайте из списка выше</div>
         </div>
         <div class="form-group">
           <label for="case-products">Продукты</label>
           <input type="text" id="case-products">
-          <div class="hint">Вводите через запятую (например: Виртуальная АТС, Контакт-центр)</div>
+          <div class="suggested-tags" id="tags-products"></div>
+          <div class="hint">Вводите через запятую или выбирайте из списка выше</div>
         </div>
         <div class="form-group">
           <label for="case-divisions">Подразделения</label>
           <input type="text" id="case-divisions">
-          <div class="hint">Вводите через запятую</div>
+          <div class="suggested-tags" id="tags-divisions"></div>
+          <div class="hint">Вводите через запятую или выбирайте из списка выше</div>
         </div>
         <div class="form-group">
           <label for="case-url">Ссылка на статью</label>
@@ -236,6 +266,30 @@
         <div class="modal-actions">
           <button type="button" class="btn" id="btn-cancel">Отмена</button>
           <button type="submit" class="btn btn--primary">Сохранить</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="admin-form-overlay" id="github-overlay">
+    <div class="admin-form-modal">
+      <h2>Настройки интеграции с GitHub</h2>
+      <p style="margin-top: 0; margin-bottom: 1.5rem; font-size: 0.875rem; color: var(--text-secondary);">
+        Укажите ваш репозиторий и Personal Access Token для автоматического сохранения изменений прямо на сайт. Данные сохраняются только в вашем браузере.
+      </p>
+      <form id="github-form">
+        <div class="form-group">
+          <label for="gh-repo">Репозиторий (например: alexanderglotov994-debug/marketplace)</label>
+          <input type="text" id="gh-repo" placeholder="owner/repo" required>
+        </div>
+        <div class="form-group">
+          <label for="gh-token">Personal Access Token</label>
+          <input type="password" id="gh-token" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" required>
+          <div class="hint">Убедитесь, что токен имеет права на запись кода (repo).</div>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn" id="btn-github-cancel">Отмена</button>
+          <button type="submit" class="btn btn--primary">Сохранить настройки</button>
         </div>
       </form>
     </div>

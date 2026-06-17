@@ -5,10 +5,16 @@ const elements = {
   tableBody: document.getElementById('cases-table-body'),
   btnAddCase: document.getElementById('btn-add-case'),
   btnDownloadCsv: document.getElementById('btn-download-csv'),
+  btnSettings: document.getElementById('btn-settings'),
+  
   formOverlay: document.getElementById('form-overlay'),
   caseForm: document.getElementById('case-form'),
   btnCancel: document.getElementById('btn-cancel'),
   modalTitle: document.getElementById('modal-title'),
+
+  githubOverlay: document.getElementById('github-overlay'),
+  githubForm: document.getElementById('github-form'),
+  btnGithubCancel: document.getElementById('btn-github-cancel'),
   
   inputs: {
     id: document.getElementById('case-id'),
@@ -18,12 +24,17 @@ const elements = {
     products: document.getElementById('case-products'),
     divisions: document.getElementById('case-divisions'),
     url: document.getElementById('case-url'),
+
+    ghRepo: document.getElementById('gh-repo'),
+    ghToken: document.getElementById('gh-token'),
   }
 };
 
 boot();
 
 async function boot() {
+  elements.inputs.ghRepo.value = localStorage.getItem('gh_repo') || '';
+  elements.inputs.ghToken.value = localStorage.getItem('gh_token') || '';
   bindEvents();
   await loadCases();
 }
@@ -33,6 +44,32 @@ function bindEvents() {
   elements.btnCancel.addEventListener('click', closeModal);
   elements.caseForm.addEventListener('submit', handleFormSubmit);
   elements.btnDownloadCsv.addEventListener('click', downloadCsv);
+
+  elements.btnSettings.addEventListener('click', () => elements.githubOverlay.classList.add('active'));
+  elements.btnGithubCancel.addEventListener('click', () => elements.githubOverlay.classList.remove('active'));
+  elements.githubForm.addEventListener('submit', handleGithubFormSubmit);
+
+  ['industries', 'products', 'divisions'].forEach(key => {
+    const input = document.getElementById(`case-${key}`);
+    if (input) {
+      input.addEventListener('input', () => {
+        const container = document.getElementById(`tags-${key}`);
+        if (!container) return;
+        const currentVals = input.value.split(',').map(s => s.trim()).filter(Boolean);
+        container.querySelectorAll('.tag-chip').forEach(chip => {
+          chip.classList.toggle('selected', currentVals.includes(chip.textContent));
+        });
+      });
+    }
+  });
+}
+
+function handleGithubFormSubmit(e) {
+  e.preventDefault();
+  localStorage.setItem('gh_repo', elements.inputs.ghRepo.value.trim());
+  localStorage.setItem('gh_token', elements.inputs.ghToken.value.trim());
+  elements.githubOverlay.classList.remove('active');
+  alert('Настройки интеграции с GitHub сохранены!');
 }
 
 async function loadCases() {
@@ -60,7 +97,6 @@ function renderTable() {
   }
 
   casesData.forEach((item, index) => {
-    // Внутренний ID для редактирования/удаления
     item._id = item._id || Date.now().toString() + index;
     
     const tr = document.createElement('tr');
@@ -84,6 +120,11 @@ function openAddModal() {
   elements.modalTitle.textContent = "Добавить кейс";
   elements.caseForm.reset();
   elements.inputs.id.value = "";
+  
+  renderSuggestedTags('industries', 'tags-industries', 'case-industries');
+  renderSuggestedTags('products', 'tags-products', 'case-products');
+  renderSuggestedTags('divisions', 'tags-divisions', 'case-divisions');
+  
   elements.formOverlay.classList.add('active');
 }
 
@@ -96,11 +137,15 @@ window.editCase = function(id) {
   elements.inputs.id.value = id;
   elements.inputs.title.value = item.title;
   elements.inputs.desc.value = item.description;
-  // Конвертируем разделитель | в запятые для удобства ввода
+  
   elements.inputs.industries.value = item.industries.split('|').filter(Boolean).join(', ');
   elements.inputs.products.value = item.products.split('|').filter(Boolean).join(', ');
   elements.inputs.divisions.value = item.divisions.split('|').filter(Boolean).join(', ');
   elements.inputs.url.value = item.url;
+  
+  renderSuggestedTags('industries', 'tags-industries', 'case-industries');
+  renderSuggestedTags('products', 'tags-products', 'case-products');
+  renderSuggestedTags('divisions', 'tags-divisions', 'case-divisions');
   
   elements.formOverlay.classList.add('active');
 }
@@ -109,6 +154,7 @@ window.deleteCase = function(id) {
   if (confirm('Вы уверены, что хотите удалить этот кейс?')) {
     casesData = casesData.filter(c => c._id !== id);
     renderTable();
+    syncWithGitHub();
   }
 }
 
@@ -119,12 +165,11 @@ function closeModal() {
 function handleFormSubmit(e) {
   e.preventDefault();
   
-  // Конвертируем запятые обратно в |
   const formatList = (str) => {
     return str.split(',')
       .map(s => s.trim())
       .filter(Boolean)
-      .map(s => s[0].toUpperCase() + s.slice(1)) // Капитализируем первую букву
+      .map(s => s[0].toUpperCase() + s.slice(1))
       .join('|');
   };
 
@@ -149,12 +194,11 @@ function handleFormSubmit(e) {
 
   renderTable();
   closeModal();
+  syncWithGitHub();
 }
 
-function downloadCsv() {
-  // UTF-8 BOM нужен для Excel
+function generateCsvString() {
   const BOM = "\uFEFF";
-  
   const headers = ['Название доработки', 'Описание', 'Отрасли', 'Продукты', 'Подразделения', 'Ссылка'];
   const csvRows = [];
   csvRows.push(headers.join(';'));
@@ -172,7 +216,11 @@ function downloadCsv() {
     csvRows.push(row.join(';'));
   });
   
-  const csvString = BOM + csvRows.join('\r\n');
+  return BOM + csvRows.join('\r\n');
+}
+
+function downloadCsv() {
+  const csvString = generateCsvString();
   const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
   
   const link = document.createElement("a");
@@ -187,17 +235,82 @@ function downloadCsv() {
   }
 }
 
+async function syncWithGitHub() {
+  const repo = localStorage.getItem('gh_repo');
+  const token = localStorage.getItem('gh_token');
+  
+  if (!repo || !token) {
+    console.warn("GitHub credentials not configured. Skipping auto-sync.");
+    return;
+  }
+  
+  const originalText = elements.btnAddCase.textContent;
+  elements.btnAddCase.textContent = "⏳ Синхронизация...";
+  elements.btnAddCase.disabled = true;
+
+  try {
+    const path = 'data/cases.csv';
+    const url = `https://api.github.com/repos/${repo}/contents/${path}`;
+    
+    // 1. Get current SHA
+    const getRes = await fetch(url, {
+      headers: {
+        'Authorization': `token ${token}`,
+        'Accept': 'application/vnd.github.v3+json'
+      }
+    });
+    
+    let sha = undefined;
+    if (getRes.ok) {
+      const fileData = await getRes.json();
+      sha = fileData.sha;
+    }
+    
+    // 2. Encode Content to Base64 (UTF-8 safe)
+    const csvStr = generateCsvString();
+    const encodedContent = btoa(unescape(encodeURIComponent(csvStr)));
+    
+    // 3. Put new content
+    const putRes = await fetch(url, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `token ${token}`,
+        'Accept': 'application/vnd.github.v3+json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        message: "Update cases.csv via Admin Panel",
+        content: encodedContent,
+        sha: sha,
+        branch: "main"
+      })
+    });
+    
+    if (!putRes.ok) {
+      const err = await putRes.json();
+      throw new Error(err.message || putRes.statusText);
+    }
+    
+    console.log("Successfully synced with GitHub");
+  } catch (err) {
+    console.error(err);
+    alert('Ошибка при синхронизации с GitHub: ' + err.message);
+  } finally {
+    elements.btnAddCase.textContent = originalText;
+    elements.btnAddCase.disabled = false;
+  }
+}
+
 function formatCsvCell(val) {
   if (val === null || val === undefined) return '';
   const str = String(val);
-  // Экранирование для CSV
   if (str.includes(';') || str.includes('"') || str.includes('\n') || str.includes('\r')) {
     return '"' + str.replace(/"/g, '""') + '"';
   }
   return str;
 }
 
-// Функции парсинга CSV (скопированы из app.js)
+// Функции парсинга CSV
 function parseCasesCsv(csvText) {
   const delimiter = detectDelimiter(csvText);
   const rows = parseDelimited(csvText, delimiter);
@@ -290,4 +403,47 @@ function escapeHtml(value) {
     .replaceAll("<", "&lt;")
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;");
+}
+
+function getUniqueTags(field) {
+  const allTags = casesData.flatMap(c => (c[field] || '').split('|').map(s => s.trim()).filter(Boolean));
+  return [...new Set(allTags)].sort((a, b) => a.localeCompare(b, 'ru'));
+}
+
+function renderSuggestedTags(field, containerId, inputId) {
+  const container = document.getElementById(containerId);
+  const input = document.getElementById(inputId);
+  if (!container || !input) return;
+  
+  const tags = getUniqueTags(field);
+  container.innerHTML = '';
+  
+  const updateAllChips = () => {
+    const currentVals = input.value.split(',').map(s => s.trim()).filter(Boolean);
+    const chips = container.querySelectorAll('.tag-chip');
+    chips.forEach(chip => {
+      chip.classList.toggle('selected', currentVals.includes(chip.textContent));
+    });
+  };
+
+  tags.forEach(tag => {
+    const chip = document.createElement('span');
+    chip.className = 'tag-chip';
+    chip.textContent = tag;
+    
+    chip.addEventListener('click', () => {
+      let currentVals = input.value.split(',').map(s => s.trim()).filter(Boolean);
+      if (currentVals.includes(tag)) {
+        currentVals = currentVals.filter(v => v !== tag);
+      } else {
+        currentVals.push(tag);
+      }
+      input.value = currentVals.join(', ');
+      updateAllChips();
+    });
+    
+    container.appendChild(chip);
+  });
+  
+  updateAllChips();
 }
