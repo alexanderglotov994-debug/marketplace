@@ -4,17 +4,156 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Админка базы кейсов</title>
-  <meta
-    name="description"
-    content="Внутренняя админ-страница для обновления базы кейсов Mango Academy."
-  >
+  <meta name="description" content="Внутренняя админ-страница для обновления базы кейсов Mango Academy.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link
-    href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap"
-    rel="stylesheet"
-  >
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
+  <style>
+    .admin-container {
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+    }
+    .admin-table-wrapper {
+      overflow-x: auto;
+      background: var(--surface);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border);
+    }
+    .admin-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+    }
+    .admin-table th, .admin-table td {
+      padding: 1rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .admin-table th {
+      background: var(--surface-hover);
+      font-weight: 600;
+      color: var(--text-secondary);
+      font-size: 0.875rem;
+    }
+    .admin-table tr:last-child td {
+      border-bottom: none;
+    }
+    .admin-actions {
+      display: flex;
+      gap: 0.5rem;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.5rem 1rem;
+      border-radius: var(--radius-md);
+      font-weight: 500;
+      cursor: pointer;
+      border: 1px solid transparent;
+      background: var(--surface-hover);
+      color: var(--text-primary);
+      transition: all 0.2s;
+      font-size: 0.875rem;
+      text-decoration: none;
+    }
+    .btn:hover {
+      background: var(--border);
+    }
+    .btn--primary {
+      background: var(--primary);
+      color: white;
+    }
+    .btn--primary:hover {
+      background: var(--primary-hover);
+    }
+    .btn--danger {
+      color: #ef4444;
+      background: #fef2f2;
+      border-color: #fecaca;
+    }
+    .btn--danger:hover {
+      background: #fee2e2;
+    }
+    .admin-form-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s;
+    }
+    .admin-form-overlay.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .admin-form-modal {
+      background: var(--surface);
+      width: 100%;
+      max-width: 600px;
+      border-radius: var(--radius-lg);
+      padding: 2rem;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    .admin-form-modal h2 {
+      margin-bottom: 1.5rem;
+      margin-top: 0;
+    }
+    .form-group {
+      margin-bottom: 1rem;
+    }
+    .form-group label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      font-size: 0.875rem;
+    }
+    .form-group input, .form-group textarea {
+      width: 100%;
+      padding: 0.75rem;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border);
+      background: var(--background);
+      color: var(--text-primary);
+      font-family: inherit;
+      font-size: 0.875rem;
+    }
+    .form-group textarea {
+      resize: vertical;
+      min-height: 80px;
+    }
+    .form-group .hint {
+      font-size: 0.75rem;
+      color: var(--text-tertiary);
+      margin-top: 0.25rem;
+    }
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 1rem;
+      margin-top: 2rem;
+    }
+    .admin-header-actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+    .text-truncate {
+      max-width: 250px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+  </style>
 </head>
 <body>
   <div class="lk-shell">
@@ -22,84 +161,86 @@
       <div class="logo-mark" aria-label="Mango Academy">
         <img src="./assets/mango-academy-mark.png" alt="Mango Academy">
       </div>
+      <div style="display: flex; gap: 1rem;">
+        <a href="index.html" class="btn">Вернуться на витрину</a>
+      </div>
     </header>
 
     <div class="workspace">
       <main class="page-shell">
         <section class="content-header">
           <div>
-            <h1>Обновление каталога кейсов</h1>
-            <p>Эта страница только для обслуживания данных</p>
+            <h1>Управление каталогом кейсов</h1>
+            <p>Добавляйте, редактируйте и скачивайте обновленный CSV файл. <br><b>Как обновить:</b> внесите изменения, нажмите "Скачать CSV" и замените файл <code>data/cases.csv</code> в репозитории скачанным файлом.</p>
           </div>
         </section>
 
-        <section class="admin-summary">
-          <div class="stat-card">
-            <span class="stat-card__label">Источник данных</span>
-            <strong class="stat-card__note"><code>data/cases.csv</code></strong>
+        <div class="admin-container">
+          <div class="admin-header-actions">
+            <button class="btn btn--primary" id="btn-add-case">+ Добавить кейс</button>
+            <button class="btn btn--primary" id="btn-download-csv" style="background: #10b981; border-color: #059669;">Скачать обновленный cases.csv</button>
           </div>
-          <div class="stat-card">
-            <span class="stat-card__label">Где обновлять</span>
-            <strong class="stat-card__note">Excel или GitHub web editor</strong>
+          
+          <div class="admin-table-wrapper">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>Название</th>
+                  <th>Отрасли</th>
+                  <th>Продукты</th>
+                  <th>Действия</th>
+                </tr>
+              </thead>
+              <tbody id="cases-table-body">
+                <tr><td colspan="4" style="text-align: center; padding: 2rem;">Загрузка данных...</td></tr>
+              </tbody>
+            </table>
           </div>
-        </section>
-
-        <div class="admin-layout">
-          <section class="results-panel">
-            <div class="results-toolbar">
-              <div>
-                <p class="panel-heading__eyebrow">Порядок обновления</p>
-                <h2>Прямое обновление на GitHub Pages</h2>
-              </div>
-            </div>
-
-            <section class="workflow-panel workflow-panel--admin">
-              <ol class="workflow-list">
-                <li>Открой файл <code>data/cases.csv</code> в Excel или прямо в GitHub.</li>
-                <li>Обнови или добавь строки кейсов.</li>
-                <li>Для нескольких значений в одной ячейке используй разделитель <code>|</code>.</li>
-                <li>Сохрани файл как <code>CSV UTF-8</code> с тем же именем или закоммить изменение через GitHub web editor.</li>
-                <li>GitHub Pages опубликует обновление после коммита в репозиторий.</li>
-                <li>Проверь пользовательскую витрину после публикации.</li>
-              </ol>
-            </section>
-          </section>
-
-          <section class="filters-panel admin-card">
-            <div class="panel-heading">
-              <div>
-                <p class="panel-heading__eyebrow">Структура CSV</p>
-                <h2>Обязательные колонки</h2>
-              </div>
-            </div>
-
-            <div class="admin-tags">
-              <span class="chip">Название доработки</span>
-              <span class="chip">Описание</span>
-              <span class="chip">Отрасли</span>
-              <span class="chip">Продукты</span>
-              <span class="chip">Подразделения</span>
-              <span class="chip">Ссылка</span>
-            </div>
-
-            <div class="admin-command-list">
-              <div class="admin-command">
-                <span class="meta-group__label">Основной файл данных</span>
-                <code>data/cases.csv</code>
-              </div>
-              <div class="admin-command">
-                <span class="meta-group__label">Разделитель мультизначений</span>
-                <code>|</code>
-              </div>
-              <div class="admin-command">
-                <span class="meta-group__label">Пользовательская витрина</span>
-                <code>index.html</code>
-              </div>
-            </div>
-          </section>
         </div>
       </main>
     </div>
   </div>
+
+  <div class="admin-form-overlay" id="form-overlay">
+    <div class="admin-form-modal">
+      <h2 id="modal-title">Добавить кейс</h2>
+      <form id="case-form">
+        <input type="hidden" id="case-id">
+        <div class="form-group">
+          <label for="case-title">Название доработки *</label>
+          <input type="text" id="case-title" required>
+        </div>
+        <div class="form-group">
+          <label for="case-desc">Описание</label>
+          <textarea id="case-desc"></textarea>
+        </div>
+        <div class="form-group">
+          <label for="case-industries">Отрасли</label>
+          <input type="text" id="case-industries">
+          <div class="hint">Вводите через запятую (например: Розничная торговля, Интернет-магазины)</div>
+        </div>
+        <div class="form-group">
+          <label for="case-products">Продукты</label>
+          <input type="text" id="case-products">
+          <div class="hint">Вводите через запятую (например: Виртуальная АТС, Контакт-центр)</div>
+        </div>
+        <div class="form-group">
+          <label for="case-divisions">Подразделения</label>
+          <input type="text" id="case-divisions">
+          <div class="hint">Вводите через запятую</div>
+        </div>
+        <div class="form-group">
+          <label for="case-url">Ссылка на статью</label>
+          <input type="url" id="case-url">
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn" id="btn-cancel">Отмена</button>
+          <button type="submit" class="btn btn--primary">Сохранить</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="admin.js"></script>
 </body>
 </html>
