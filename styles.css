@@ -622,54 +622,13 @@ input {
   background: rgba(0, 0, 0, 0.45);
 }
 
-.case-card__title {
-  margin: 18px 0 10px;
-  font-size: 20px;
-  line-height: 28px;
-  font-weight: 400;
-  color: #102433;
-}
-
 .case-card__description {
-  margin: 0 0 20px;
-  color: #37474f;
-  font-size: 14px;
-  line-height: 20px;
-  display: -webkit-box;
-  -webkit-line-clamp: 5;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.meta-block {
-  display: grid;
-  gap: 10px;
-  margin-top: auto;
-}
-
-.meta-group {
-  display: grid;
-  gap: 12px;
-  grid-template-columns: 112px minmax(0, 1fr);
-  align-items: start;
-}
-
-.meta-group__label {
-  font-size: 12px;
-  line-height: 16px;
-  font-weight: 700;
-  color: var(--muted);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-}
-
-.meta-group__value {
   margin: 0;
   color: #37474f;
-  font-size: 14px;
-  line-height: 20px;
+  font-size: 15px;
+  line-height: 22px;
   display: -webkit-box;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 7;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }

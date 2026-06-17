@@ -406,7 +406,6 @@ function renderCards(items) {
 
   items.forEach((item) => {
     const node = elements.template.content.firstElementChild.cloneNode(true);
-    node.querySelector(".case-card__title").textContent = item.title;
     node.querySelector(".case-card__description").textContent = item.description;
 
     const link = node.querySelector(".case-card__link");
@@ -418,10 +417,6 @@ function renderCards(items) {
       visual.style.background = getGradientForTitle(item.title);
       node.querySelector(".case-card__visual-text").textContent = item.title;
     }
-
-    fillMetaLine(node, "industries", item.industries);
-    fillMetaLine(node, "products", item.products);
-    fillMetaLine(node, "divisions", item.divisions);
 
     fragment.appendChild(node);
   });
@@ -439,10 +434,7 @@ function getGradientForTitle(title) {
   return `linear-gradient(135deg, hsl(${h1}, 65%, 45%) 0%, hsl(${h2}, 75%, 35%) 100%)`;
 }
 
-function fillMetaLine(node, field, values) {
-  const container = node.querySelector(`[data-field="${field}"]`);
-  container.textContent = values && values.length > 0 ? values.join(", ") : "все";
-}
+
 
 function escapeHtml(value) {
   return value
