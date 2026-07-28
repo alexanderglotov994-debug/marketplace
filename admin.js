@@ -81,10 +81,11 @@ async function loadCases() {
 
     const csvText = await response.text();
     casesData = parseCasesCsv(csvText);
+    updateTechnicalSpecFlags();
     renderTable();
   } catch (error) {
     console.error(error);
-    elements.tableBody.innerHTML = `<tr><td colspan="4" style="text-align: center; padding: 2rem; color: var(--danger);">Не удалось загрузить data/cases.csv. Если вы только начинаете, таблица пуста.</td></tr>`;
+    elements.tableBody.innerHTML = `<tr><td colspan="5" style="text-align: center; padding: 2rem; color: var(--danger);">Не удалось загрузить data/cases.csv. Если вы только начинаете, таблица пуста.</td></tr>`;
   }
 }
 
@@ -92,7 +93,7 @@ function renderTable() {
   elements.tableBody.innerHTML = "";
   
   if (casesData.length === 0) {
-    elements.tableBody.innerHTML = `<tr><td colspan="4" style="text-align: center; padding: 2rem;">Кейсов пока нет</td></tr>`;
+    elements.tableBody.innerHTML = `<tr><td colspan="5" style="text-align: center; padding: 2rem;">Кейсов пока нет</td></tr>`;
     return;
   }
 
@@ -104,6 +105,7 @@ function renderTable() {
       <td><div class="text-truncate" title="${escapeHtml(item.title)}">${escapeHtml(item.title)}</div></td>
       <td><div class="text-truncate" title="${escapeHtml(item.industries)}">${escapeHtml(item.industries || '-')}</div></td>
       <td><div class="text-truncate" title="${escapeHtml(item.products)}">${escapeHtml(item.products || '-')}</div></td>
+      <td>${item.technicalSpec ? "Да" : "—"}</td>
       <td>
         <div class="admin-actions">
           <button class="btn" onclick="editCase('${item._id}')">Ред.</button>
@@ -153,6 +155,7 @@ window.editCase = function(id) {
 window.deleteCase = function(id) {
   if (confirm('Вы уверены, что хотите удалить этот кейс?')) {
     casesData = casesData.filter(c => c._id !== id);
+    updateTechnicalSpecFlags();
     renderTable();
     syncWithGitHub();
   }
@@ -180,7 +183,8 @@ function handleFormSubmit(e) {
     industries: formatList(elements.inputs.industries.value),
     products: formatList(elements.inputs.products.value),
     divisions: formatList(elements.inputs.divisions.value),
-    url: elements.inputs.url.value.trim()
+    url: elements.inputs.url.value.trim(),
+    technicalSpec: ""
   };
 
   if (editingId) {
@@ -192,6 +196,7 @@ function handleFormSubmit(e) {
     casesData.push(newData);
   }
 
+  updateTechnicalSpecFlags();
   renderTable();
   closeModal();
   syncWithGitHub();
@@ -199,10 +204,12 @@ function handleFormSubmit(e) {
 
 function generateCsvString() {
   const BOM = "\uFEFF";
-  const headers = ['Название доработки', 'Описание', 'Отрасли', 'Продукты', 'Подразделения', 'Ссылка'];
+  const headers = ['Название доработки', 'Описание', 'Отрасли', 'Продукты', 'Подразделения', 'Ссылка', 'Кейс с ТЗ'];
   const csvRows = [];
   csvRows.push(headers.join(';'));
-  
+
+  updateTechnicalSpecFlags();
+
   casesData.forEach(item => {
     const row = [
       item.title,
@@ -210,7 +217,8 @@ function generateCsvString() {
       item.industries,
       item.products,
       item.divisions,
-      item.url
+      item.url,
+      item.technicalSpec
     ].map(formatCsvCell);
     
     csvRows.push(row.join(';'));
@@ -323,7 +331,8 @@ function parseCasesCsv(csvText) {
     industries: header.indexOf("Отрасли"),
     products: header.indexOf("Продукты"),
     divisions: header.indexOf("Подразделения"),
-    url: header.indexOf("Ссылка")
+    url: header.indexOf("Ссылка"),
+    technicalSpec: header.indexOf("Кейс с ТЗ")
   };
 
   return rows
@@ -335,8 +344,39 @@ function parseCasesCsv(csvText) {
       industries: normalizeCsvCell(row[indexes.industries]),
       products: normalizeCsvCell(row[indexes.products]),
       divisions: normalizeCsvCell(row[indexes.divisions]),
-      url: normalizeCsvCell(row[indexes.url])
+      url: normalizeCsvCell(row[indexes.url]),
+      technicalSpec: indexes.technicalSpec === -1
+        ? ""
+        : normalizeCsvCell(row[indexes.technicalSpec])
     }));
+}
+
+function getCanonicalCaseUrl(value) {
+  const url = normalizeCsvCell(value);
+  if (!url) return "";
+
+  try {
+    const parsedUrl = new URL(url);
+    parsedUrl.hash = "";
+    return parsedUrl.toString().replace(/\/$/, "").toLowerCase();
+  } catch {
+    return url.split("#", 1)[0].replace(/\/+$/, "").toLowerCase();
+  }
+}
+
+function updateTechnicalSpecFlags() {
+  const urlCounts = new Map();
+
+  casesData.forEach(item => {
+    const canonicalUrl = getCanonicalCaseUrl(item.url);
+    if (!canonicalUrl) return;
+    urlCounts.set(canonicalUrl, (urlCounts.get(canonicalUrl) || 0) + 1);
+  });
+
+  casesData.forEach(item => {
+    const canonicalUrl = getCanonicalCaseUrl(item.url);
+    item.technicalSpec = canonicalUrl && urlCounts.get(canonicalUrl) === 1 ? "Да" : "";
+  });
 }
 
 function normalizeCsvCell(value) {

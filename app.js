@@ -1,7 +1,8 @@
 const FILTER_CONFIG = [
   { key: "industries", label: "Отрасль клиента" },
   { key: "products", label: "Продукт" },
-  { key: "divisions", label: "Подразделение" }
+  { key: "divisions", label: "Подразделение" },
+  { key: "technicalSpec", label: "Кейс с подробным техническим заданием" }
 ];
 
 const state = {
@@ -9,7 +10,8 @@ const state = {
   search: "",
   industries: new Set(),
   products: new Set(),
-  divisions: new Set()
+  divisions: new Set(),
+  technicalSpec: new Set()
 };
 
 const elements = {
@@ -69,7 +71,8 @@ function normalizeItem(item, index) {
     url: item.url || "#",
     industries: sanitizeList(item.industries),
     products: sanitizeList(item.products),
-    divisions: sanitizeList(item.divisions)
+    divisions: sanitizeList(item.divisions),
+    technicalSpec: [item.technicalSpec ? "Да" : "Нет"]
   };
 }
 
@@ -87,7 +90,8 @@ function parseCasesCsv(csvText) {
     industries: header.indexOf("Отрасли"),
     products: header.indexOf("Продукты"),
     divisions: header.indexOf("Подразделения"),
-    url: header.indexOf("Ссылка")
+    url: header.indexOf("Ссылка"),
+    technicalSpec: header.indexOf("Кейс с ТЗ")
   };
 
   Object.entries(indexes).forEach(([columnName, index]) => {
@@ -105,7 +109,8 @@ function parseCasesCsv(csvText) {
       industries: splitMultiValue(row[indexes.industries]),
       products: splitMultiValue(row[indexes.products]),
       divisions: splitMultiValue(row[indexes.divisions]),
-      url: normalizeCsvCell(row[indexes.url])
+      url: normalizeCsvCell(row[indexes.url]),
+      technicalSpec: normalizeCsvCell(row[indexes.technicalSpec]).toLowerCase() === "да"
     }));
 }
 
@@ -198,7 +203,6 @@ function renderFilterGroups() {
       <summary>
         <div class="filter-group__meta">
           <span class="filter-group__label">${label}</span>
-          <span class="filter-group__status">${options.length} значений</span>
         </div>
         <span class="chip">${options.length}</span>
       </summary>
@@ -416,6 +420,16 @@ function renderCards(items) {
     if (visual) {
       visual.style.background = getGradientForTitle(item.title);
       node.querySelector(".case-card__visual-text").textContent = item.title;
+    }
+
+    const badges = node.querySelector(".case-card__badges");
+    if (item.technicalSpec.includes("Да")) {
+      const badge = document.createElement("span");
+      badge.className = "case-card__badge";
+      badge.textContent = "Кейс с подробным техническим заданием";
+      badges.appendChild(badge);
+    } else {
+      badges.remove();
     }
 
     fragment.appendChild(node);
